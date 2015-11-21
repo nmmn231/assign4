@@ -1,13 +1,13 @@
-
 PImage fighter, backgroundOne, backgroundTwo, hpImg, treasure, enemy;
 PImage startOne, startTwo, endOne, endTwo; 
-int treasureX, treasureY, x, fighterX, fighterY, gamestate, speed=0, enemyMode, restartY;
+int treasureX, treasureY, x, fighterX, fighterY, gamestate, speed=0, enemyMode, restartY, restartX;
 float hp;
 final int GAME_START = 1, GAME_RUN = 2, GAME_END = 3;
 final int FIRST = 4, SECOND = 5, THIRD = 6;
 boolean upPressed = false, downPressed = false, leftPressed = false, rightPressed = false;
-int [] enemyX = new int[5];
-int [] enemyY = new int[5];
+int [] enemyX = new int[8];
+int [] enemyY = new int[8];
+boolean [] eCrash = new boolean[8];
 
 
 void setup () {
@@ -26,6 +26,7 @@ void setup () {
   enemyX[0]=10;
   enemyY[0]=floor(random(50,400));  
   restartY=floor(random(50,400));  //enemy random
+  restartX=0-enemy.width;
   
   backgroundOne=loadImage("img/bg1.png");
   backgroundTwo=loadImage("img/bg2.png");
@@ -40,6 +41,12 @@ void setup () {
   gamestate = GAME_START;
   enemyMode = 4;
   x=0;
+  
+  
+  //initialize eCrash to false
+  for(int i = 0; i<8;i++){
+    eCrash[i] = false;
+  }
 }
 
 
@@ -112,36 +119,40 @@ void draw() {
       rect(20,12,hp,18);  
       image(hpImg,10,10);
           
-      //bump into enemy
-      for(int i=0;i<5;i++){
-      if(fighterY+fighter.height>enemyY[i] && fighterY+fighter.height<enemyY[i]+enemy.height && fighterX<enemyX[i]+enemy.width && fighterX+fighter.width>enemyX[i]){
+
+      for(int i =0;i< 8;i++){
+          if( fighterY+fighter.height*4/5>enemyY[i] && fighterY+fighter.height/5<enemyY[i]+enemy.height && fighterX<enemyX[i]+enemy.width && fighterX+fighter.width>enemyX[i]){
             hp -= 196*0.2;
-            enemyX[i]=-100;
-            enemyY[i]=-100;
-      }
-      }
+            //for crash
+            eCrash[i] = true;
+           if(hp<1){
+             gamestate=3;
+           }
+          } 
+       }
+
      
-     
-      //enemy moving      
+      //enemy moving   
+      restartX+=4;
       switch(enemyMode){
        case 4:
-       int col=0, row=0;
-         for(col=0;col<5;col++){
-           for(row=0;row<5;row++){
-             enemyY[row]=restartY;
-             enemyX[col]=0-60*col+speed;
-             image(enemy, enemyX[col], enemyY[row]);
-           if(enemyX[col]>width+60*4){
-            enemyMode=5; 
-            speed=0;
-            restartY=floor(random(50,290));
-            }
-      
-          
-      }
-      speed++; 
-           }
-        
+       for(int i =0;i<5;i++){
+         if(eCrash[i]==false){
+           enemyX[i] = restartX-i*enemy.width;
+           enemyY[i] = restartY;
+           image(enemy,enemyX[i],enemyY[i]);
+         }else if(eCrash[i]==true){
+           enemyY[i] =-100;
+         }
+       }      
+       if(restartX>width+5*enemy.width){
+         enemyMode =5;
+         restartX=0-enemy.width;
+         restartY = (int)random(50,290);
+         for(int i =0; i<8;i++){
+           eCrash[i] = false;
+         }
+       }
 
 
          
@@ -149,42 +160,63 @@ void draw() {
           
         case 5:
         for(int i=0;i<5;i++){
-            enemyX[i]=0-60*i+speed;
+          if(eCrash[i] == false){
+            enemyX[i]=restartX-i*enemy.width;
             enemyY[i]=restartY+30*i;
             image(enemy, enemyX[i], enemyY[i]);
-         if(enemyX[i]>width+60*4){
-           enemyMode=6; 
-           speed=0;
-           restartY=floor(random(110,330));
-            }
-          speed++;
+            speed++;
+          }else if(eCrash[i]==true){
+            enemyY[i]= -100;
+          }
         }
+        
+        if(restartX>width+5*enemy.width){
+         enemyMode =6;
+         restartX=0-enemy.width;
+         restartY = (int)random(110,330);
+         for(int i =0; i<8;i++){
+           eCrash[i] = false;
+         }
+       }
+        
      
         break;
        
         case 6:
-        int restartY2=restartY;
-        for(int i=0;i<3;i++){
-            enemyX[i]=0-60*i+speed;
-            enemyY[i]=restartY+30*i;
-            image(enemy, enemyX[i], enemyY[i]);
-            enemyY[i]=restartY2-30*i;
-            image(enemy, enemyX[i], enemyY[i]);
-            speed++;
+        for(int i=0;i<8;i++){
+          if(eCrash[i]==false){
+            if(i<3){
+              enemyX[i]=restartX-i*enemy.width;
+              enemyY[i]=restartY-30*i;
+              image(enemy, enemyX[i], enemyY[i]);
+            }else if(i>=3 &&i<5){
+              enemyX[i]=restartX-(i-2)*enemy.width;
+              enemyY[i]=restartY+30*(i-2);
+              image(enemy, enemyX[i], enemyY[i]);
+            }else if(i>=5 && i<7){
+              enemyX[i]=restartX-(i-2)*enemy.width;
+              enemyY[i]=restartY-30*(i-6);
+              image(enemy, enemyX[i], enemyY[i]);
+            }else{
+              enemyX[i]=restartX-(i-4)*enemy.width;
+              enemyY[i]=restartY-30*(i-6);
+              image(enemy, enemyX[i], enemyY[i]);
+            } 
+          }else if(eCrash[i]==true){
+            enemyY[i]= -100;
           }
-        for(int i=3;i<5;i++){
-            enemyX[i]=0-60*i+speed;
-            enemyY[i]=restartY-30*(i-4);
-            image(enemy, enemyX[i], enemyY[i]);
-            enemyY[i]=restartY2+30*(i-4);
-            image(enemy, enemyX[i], enemyY[i]);
-          if(enemyX[i]>width+60*4){
-           enemyMode=4; 
-           speed=0;
-           restartY=floor(random(50,400));
-            }
-            speed++;
-          }
+        }
+        if(restartX>width+8*enemy.width){
+         enemyMode =4;
+         restartX=0-enemy.width;
+         restartY = (int)random(50,400);
+         for(int i =0; i<8;i++){
+           eCrash[i] = false;
+         }
+       }
+       
+        
+       
         
          break;
     
@@ -200,13 +232,17 @@ void draw() {
       if(mouseX>210 && mouseX<450 && mouseY>300 && mouseY<350){
       image(endTwo,0,0);
         if(mousePressed){
-        gamestate=2;
-        fighterX=570;
-        fighterY=240;
-        treasureX=floor(random(20,520));  
-        treasureY=floor(random(50,430));
-        hp=196*0.2;
-        
+          for(int i=0;i<8;i++){
+            eCrash[i]=false;
+          }
+          restartX=0-enemy.width;
+          gamestate=2;
+          enemyMode=4;
+          fighterX=570;
+          fighterY=240;
+          treasureX=floor(random(20,520));  
+          treasureY=floor(random(50,430));
+          hp=196*0.2;
         }
     }
    }
@@ -249,6 +285,3 @@ void keyReleased(){
     }
   }
   }
-
-
-    
