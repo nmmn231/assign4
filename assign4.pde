@@ -1,6 +1,6 @@
 PImage fighter, backgroundOne, backgroundTwo, hpImg, treasure, enemy;
 PImage startOne, startTwo, endOne, endTwo; 
-int treasureX, treasureY, x, fighterX, fighterY, gamestate, speed=0, enemyMode, restartY, restartX;
+int treasureX, treasureY, x, fighterX, fighterY, gamestate, speed=0, enemyMode, restartY, restartX, counter;
 float hp;
 final int GAME_START = 1, GAME_RUN = 2, GAME_END = 3;
 final int FIRST = 4, SECOND = 5, THIRD = 6;
@@ -8,6 +8,10 @@ boolean upPressed = false, downPressed = false, leftPressed = false, rightPresse
 int [] enemyX = new int[8];
 int [] enemyY = new int[8];
 boolean [] eCrash = new boolean[8];
+PImage [] flame = new PImage[5];
+int []currentFrame = new int[5];
+
+
 
 
 void setup () {
@@ -34,6 +38,10 @@ void setup () {
   startTwo = loadImage("img/start1.png");
   endOne = loadImage("img/end2.png");
   endTwo = loadImage("img/end1.png");
+  for(int i=0;i<5;i++){
+    flame[i]=loadImage("img/flame"+(i+1)+".png");
+  }
+  
   
   fighterX=570;
   fighterY=240;  //fighter position
@@ -41,12 +49,13 @@ void setup () {
   gamestate = GAME_START;
   enemyMode = 4;
   x=0;
+  counter=0;
+  frameRate(60);
   
-  
-  //initialize eCrash to false
   for(int i = 0; i<8;i++){
     eCrash[i] = false;
   }
+ 
 }
 
 
@@ -104,7 +113,7 @@ void draw() {
       
       //eating treasure
       image(treasure,treasureX,treasureY);
-      if(fighterY+fighter.height*4/5>treasureY && fighterY+fighter.height/5<treasureY+treasure.height && fighterX<treasureX+treasure.width && fighterX+fighter.width>treasureX){
+      if(fighterY+fighter.height>treasureY && fighterY<treasureY+treasure.height && fighterX<treasureX+treasure.width && fighterX+fighter.width>treasureX){
       treasureX=floor(random(20,520));  
       treasureY=floor(random(50,430));
       hp += 196*0.1;
@@ -119,19 +128,20 @@ void draw() {
       rect(20,12,hp,18);  
       image(hpImg,10,10);
           
-
+      //crash
       for(int i =0;i< 8;i++){
-          if( fighterY+fighter.height*4/5>enemyY[i] && fighterY+fighter.height/5<enemyY[i]+enemy.height && fighterX<enemyX[i]+enemy.width && fighterX+fighter.width>enemyX[i]){
-            hp -= 196*0.2;
-            //for crash
-            eCrash[i] = true;
-           if(hp<1){
-             gamestate=3;
-           }
-          } 
+        if( fighterY+fighter.height>enemyY[i] && fighterY<enemyY[i]+enemy.height && fighterX<enemyX[i]+enemy.width && fighterX+fighter.width>enemyX[i]){
+          eCrash[i] = true;
+          hp-=0.2*196;
+         }
+      }
+       if(hp<1){
+         gamestate=3;
        }
+       println(hp);
+        
 
-     
+
       //enemy moving   
       restartX+=4;
       switch(enemyMode){
@@ -141,10 +151,12 @@ void draw() {
            enemyX[i] = restartX-i*enemy.width;
            enemyY[i] = restartY;
            image(enemy,enemyX[i],enemyY[i]);
-         }else if(eCrash[i]==true){
-           enemyY[i] =-100;
-         }
-       }      
+         }else{
+           enemyY[i]=-100;
+         }     
+       }
+       
+
        if(restartX>width+5*enemy.width){
          enemyMode =5;
          restartX=0-enemy.width;
@@ -221,9 +233,6 @@ void draw() {
          break;
     
   }
-
-
-
       
       break;
   
@@ -246,7 +255,8 @@ void draw() {
         }
     }
    }
-}
+  }
+
    
 
 
